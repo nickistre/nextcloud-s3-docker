@@ -122,5 +122,9 @@ RUN set -ex; \
 COPY *.sh upgrade.exclude /
 COPY config/* /usr/src/nextcloud/config/
 
+# Setup php for error output
+COPY php/php.override.ini /usr/local/etc/php/conf.d/php.override.ini
+COPY php/www.conf /usr/local/etc/php-fpm.d/www.conf
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
