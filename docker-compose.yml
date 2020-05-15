@@ -25,11 +25,14 @@ services:
     environment:
       - MYSQL_HOST=db
       - REDIS_HOST=redis
+      - S3_HOST=s3
     env_file:
       - db.env
+      - s3.env
     depends_on:
       - db
       - redis
+      - s3
 
   web:
     build: ./web
@@ -51,7 +54,30 @@ services:
     depends_on:
       - db
       - redis
+      - s3
+
+  s3:
+    image: minio/minio
+    restart: always
+    volumes:
+      - s3data:/data
+    environment:
+      - S3_ACCESS_KEY
+      - S3_SECRET_KEY
+      - MINIO_ACCESS_KEY=$S3_ACCESS_KEY
+      - MINIO_SECRET_KEY=$S3_SECRET_KEY
+    env_file:
+      - s3.env
+    command: --compat server /data
+
+  s3watch:
+    build: ./s3watch
+    env_file:
+      - s3.env
+    depends_on:
+      - s3
 
 volumes:
   db:
   nextcloud:
+  s3data:
