@@ -1,44 +1,61 @@
 version: '3'
 
 services:
-  db:
+  nextcloud-mariadb:
     image: mariadb
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     restart: always
     volumes:
-      - db:/var/lib/mysql
+      - nextcloud-mariadb:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD
+      - MYSQL_USER
       - MYSQL_PASSWORD
-    env_file:
-      - db.env
+      - MYSQL_DATABASE
+      - MYSQL_ROOT_PASSWORD
 
-  redis:
+  nextcloud-redis:
     image: redis:alpine
     restart: always
 
-  app:
-    image: nextcloud:fpm-alpine
+  nextcloud-s3:
+    image: minio/minio
+    restart: always
+    volumes:
+      - nextcloud-s3data:/data
+    environment:
+      - S3_ACCESS_KEY
+      - S3_SECRET_KEY
+      - MINIO_ACCESS_KEY=$S3_ACCESS_KEY
+      - MINIO_SECRET_KEY=$S3_SECRET_KEY
+    command: --compat server /data
+
+  nextcloud:
+    image: nickistre/nextcloud:fpm-alpine
     build: ./fpm-alpine
     restart: always
     volumes:
       - nextcloud:/var/www/html
     environment:
-      - MYSQL_HOST=db
-      - REDIS_HOST=redis
-      - S3_HOST=s3
+      - MYSQL_USER
       - MYSQL_PASSWORD
+      - MYSQL_DATABASE
       - S3_ACCESS_KEY
       - S3_SECRET_KEY
+      - S3_BUCKETNAME
+      - S3_AUTOCREATE
+      - S3_HOST
+      - S3_PORT
+      - S3_USE_PATH_STYLE
+      - S3_USE_SSL
     env_file:
-      - db.env
-      - s3.env
+      - nextcloud.env
     depends_on:
-      - db
-      - redis
-      - s3
+      - nextcloud-mariadb
+      - nextcloud-redis
+      - nextcloud-s3
 
-  web:
+  nextcloud-web:
+    image: nickistre/nextcloud-web
     build: ./web
     restart: always
     ports:
@@ -46,55 +63,46 @@ services:
     volumes:
       - nextcloud:/var/www/html:ro
     depends_on:
-      - app
+      - nextcloud
 
-  cron:
-    image: nextcloud:fpm-alpine
+  nextcloud-cron:
+    image: nickistre/nextcloud-cron:fpm-alpine
     build: ./fpm-alpine
     restart: always
     volumes:
       - nextcloud:/var/www/html
     entrypoint: /cron.sh
     environment:
-      - MYSQL_HOST=db
-      - REDIS_HOST=redis
-      - S3_HOST=s3
+      - MYSQL_USER
       - MYSQL_PASSWORD
+      - MYSQL_DATABASE
       - S3_ACCESS_KEY
       - S3_SECRET_KEY
+      - S3_BUCKETNAME
+      - S3_AUTOCREATE
+      - S3_PORT
+      - S3_USE_PATH_STYLE
+      - S3_USE_SSL
     env_file:
-      - db.env
-      - s3.env
+      - nextcloud.env
     depends_on:
-      - db
-      - redis
-      - s3
+      - nextcloud-mariadb
+      - nextcloud-redis
+      - nextcloud-s3
 
-  s3:
-    image: minio/minio
-    restart: always
-    volumes:
-      - s3data:/data
-    environment:
-      - S3_ACCESS_KEY
-      - S3_SECRET_KEY
-      - MINIO_ACCESS_KEY=$S3_ACCESS_KEY
-      - MINIO_SECRET_KEY=$S3_SECRET_KEY
-    env_file:
-      - s3.env
-    command: --compat server /data
-
-  s3watch:
+  nextcloud-s3watch:
+    image: nickistre/nextcloud-s3watch
     build: ./s3watch
     environment:
       - S3_ACCESS_KEY
       - S3_SECRET_KEY
-    env_file:
-      - s3.env
+      - S3_BUCKETNAME
+      - S3_HOST
+      - S3_PORT
     depends_on:
-      - s3
+      - nextcloud-s3
 
 volumes:
-  db:
+  nextcloud-mariadb:
+  nextcloud-s3data:
   nextcloud:
-  s3data:
