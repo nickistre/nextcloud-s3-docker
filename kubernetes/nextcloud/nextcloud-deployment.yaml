@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o ./kubernetes/
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: nextcloud
+  name: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: nextcloud
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -o ./kubernetes/
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: nextcloud
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_HOST
+          valueFrom:
+            secretKeyRef:
+              key: MYSQL_HOST
+              name: nextcloud-secrets
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: MYSQL_DATABASE
+
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_HOST
+              name: nextcloud-secrets
+              optional: true
+        - name: REDIS_HOST_PORT
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_HOST_PORT
+              name: nextcloud-secrets
+              optional: true
+
+        - name: S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: S3_ACCESS_KEY
+        - name: S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: S3_SECRET_KEY
+        - name: S3_BUCKETNAME
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: S3_BUCKETNAME
+        - name: S3_HOST
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: S3_HOST
+              optional: true
+        - name: S3_PORT
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secrets
+              key: S3_PORT
+              optional: true
+        - name: S3_AUTOCREATE
+          valueFrom:
+            secretKeyRef:
+              key: S3_AUTOCREATE
+              name: nextcloud-secrets
+              optional: true
+        - name: S3_USE_PATH_STYLE
+          valueFrom:
+            secretKeyRef:
+              key: S3_USE_PATH_STYLE
+              name: nextcloud-secrets
+              optional: true
+        - name: S3_USE_SSL
+          valueFrom:
+            secretKeyRef:
+              key: S3_USE_SSL
+              name: nextcloud-secrets
+              optional: true
+        image: nickistre/nextcloud:fpm-alpine
+        imagePullPolicy: ""
+        name: nextcloud
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: nextcloud
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: nextcloud
+        persistentVolumeClaim:
+          claimName: nextcloud
+status: {}

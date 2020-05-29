@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: nextcloud
+  name: nextcloud
+spec:
+  type: ClusterIP
+  ports:
+    - name: "php-fpm"
+      port: 9000
+      targetPort: 9000
+  selector:
+    io.kompose.service: nextcloud

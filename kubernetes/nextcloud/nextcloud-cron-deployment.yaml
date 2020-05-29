@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o ./kubernetes/
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: nextcloud-cron
+  name: nextcloud-cron
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: nextcloud-cron
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -o ./kubernetes/
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: nextcloud-cron
+    spec:
+      containers:
+      - command:
+        - /cron.sh
+        env:
+        - name: MYSQL_HOST
+          value: nextcloud-mariadb
+        - name: REDIS_HOST
+          value: nextcloud-redis
+        - name: S3_HOST
+          value: nextcloud-s3
+        image: nickistre/nextcloud-cron:fpm-alpine
+        imagePullPolicy: ""
+        name: nextcloud-cron
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: nextcloud
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: nextcloud
+        persistentVolumeClaim:
+          claimName: nextcloud
+status: {}

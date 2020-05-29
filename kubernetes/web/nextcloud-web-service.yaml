@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o ./kubernetes/
+    kompose.version: 1.21.0 (992df58d8)
+  labels:
+    io.kompose.service: nextcloud-web
+  name: nextcloud-web
+spec:
+  type: LoadBalancer
+  ports:
+  - name: "http"
+    port: 80
+    targetPort: 80
+  selector:
+    io.kompose.service: nextcloud-web
